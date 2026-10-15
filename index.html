@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sing With Me</title>
+<meta name="description" content="Tap a picture to watch a grown-up sing the song.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sing With Me">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#e9eff8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12162e" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Grandstander:wght@500;800&display=swap">
+<style>
+/* Layout: one screen of six chunky toy-block buttons (2 x 3 upright, 3 x 2 sideways); grown-up controls sit in a sheet behind a hold-to-open lock. */
+:root {
+  --bg: #e9eff8;
+  --surface: #ffffff;
+  --ink: #1d2240;
+  --ink-soft: #56607f;
+  --line: #cad3e3;
+  --accent: #3556d4;
+  --on-accent: #ffffff;
+  --danger: #b8322a;
+  /* The video stage is dark in both themes on purpose. */
+  --stage: #0b0e1d;
+  --stage-ink: #ffffff;
+  --stage-btn: #ffffff;
+  --stage-btn-ink: #1d2240;
+  --stage-btn-base: #b8c0d6;
+  --font-display: "Grandstander", "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif;
+  --font-body: "Andika", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius-tile: 28px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12162e; --surface: #1d2347; --ink: #eef0ff; --ink-soft: #a9b1d8;
+    --line: #333b68; --accent: #91a8ff; --on-accent: #10163a; --danger: #ff8b7c;
+    color-scheme: dark;
+  }
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  background: var(--bg);
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 1rem/1.4 var(--font-body);
+  padding-inline: 16px;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+[hidden] { display: none !important; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Kids' screen ---------- */
+.app {
+  height: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding-block: 12px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top h1 {
+  margin: 0;
+  font: 800 clamp(1.35rem, 5.2vw, 1.9rem)/1.1 var(--font-display);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+.note { margin: 0; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.4; max-width: 60ch; }
+
+.lock {
+  position: relative;
+  flex: none;
+  width: 48px; height: 48px;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  display: grid; place-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.lock .padlock { width: 20px; height: 20px; }
+.lock .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.lock .ring circle { fill: none; stroke-width: 3; }
+.lock .ring .base { stroke: var(--line); }
+.lock .ring .prog { stroke: var(--accent); stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: round; }
+.lock.holding .ring .prog { transition: stroke-dashoffset 2s linear; stroke-dashoffset: 0; }
+.lock.holding { color: var(--accent); }
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 20px 14px;
+}
+@media (min-aspect-ratio: 1/1) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.t-ship   { --c: #ff9f7f; --deep: #d96c4d; --label: #2a1a3d; }
+.t-ice    { --c: #2a8fbc; --deep: #1c6a8f; --label: #ffffff; }
+.t-snow   { --c: #7d5fdc; --deep: #5940b0; --label: #ffffff; }
+.t-spider { --c: #ffd34a; --deep: #d6a314; --label: #2b2141; }
+.t-bus    { --c: #ec5a4c; --deep: #bb392d; --label: #ffffff; }
+.t-sheep  { --c: #72c578; --deep: #4b9c52; --label: #14321c; }
+
+.tile {
+  appearance: none;
+  border: 0;
+  position: relative;
+  min-width: 0; min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 14px;
+  border-radius: var(--radius-tile);
+  background: var(--c);
+  color: var(--label);
+  box-shadow: 0 8px 0 var(--deep), 0 14px 18px -10px rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+.tile:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--deep), 0 4px 8px -6px rgb(0 0 0 / 0.45); }
+.tile .art { width: 100%; height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.tile .art svg { width: 100%; height: 100%; max-width: 200px; }
+.tile .name {
+  font: 800 clamp(0.95rem, 2.4vmin + 0.55rem, 1.55rem)/1.05 var(--font-display);
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+}
+.tile .soon {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgb(255 255 255 / 0.85);
+  color: var(--deep);
+  display: none; place-items: center;
+  pointer-events: none;
+}
+.tile .soon svg { width: 18px; height: 18px; }
+.tile.empty .soon { display: grid; }
+.tile.empty .art { opacity: 0.8; }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-3deg); }
+  80% { transform: rotate(2deg); }
+}
+.tile.wiggle { animation: wiggle 0.5s ease; }
+
+/* ---------- Video player ---------- */
+.player {
+  position: fixed; inset: 0; z-index: 20;
+  background: var(--stage);
+  color: var(--stage-ink);
+}
+.player .stage { position: absolute; inset: 0; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.player video { display: block; width: 100%; height: 100%; object-fit: contain; background: var(--stage); transition: opacity 0.2s; }
+.player[data-state="paused"] video, .player[data-state="ended"] video, .player[data-state="error"] video { opacity: 0.4; }
+.player .center { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; padding: 16px; }
+.player .center > * { grid-area: 1 / 1; }
+.player .center button { pointer-events: auto; }
+.player .spinner, .player #player-play, .player .end-actions, .player .player-msg { display: none; }
+.player[data-state="loading"] .spinner { display: block; }
+.player[data-state="paused"] #player-play { display: grid; }
+.player[data-state="ended"] .end-actions { display: flex; }
+.player[data-state="error"] .player-msg { display: block; }
+
+.big-btn {
+  appearance: none; border: 0; border-radius: 50%;
+  width: 84px; height: 84px;
+  background: var(--stage-btn); color: var(--stage-btn-ink);
+  box-shadow: 0 6px 0 var(--stage-btn-base);
+  display: grid; place-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--stage-btn-base); }
+.big-btn svg { width: 46%; height: 46%; }
+.big-btn.huge { width: 128px; height: 128px; }
+.player .home {
+  position: absolute; z-index: 1;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  left: calc(env(safe-area-inset-left, 0px) + 16px);
+  width: 76px; height: 76px;
+}
+.end-actions { gap: 28px; flex-wrap: wrap; justify-content: center; }
+.end-btn { display: grid; justify-items: center; gap: 10px; font: 800 1.2rem/1 var(--font-display); }
+.player-msg { margin: 0; max-width: 30ch; text-align: center; font: 800 1.3rem/1.3 var(--font-display); }
+.spinner {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 7px solid rgb(255 255 255 / 0.22); border-top-color: var(--stage-ink);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Grown-ups sheet ---------- */
+.sheet {
+  position: fixed; inset: 0; z-index: 30;
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  -webkit-user-select: text; user-select: text;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+}
+.sheet-inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; line-height: 1.45; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet h2 { margin: 0; font: 800 1.7rem/1.1 var(--font-display); }
+.sheet h3 { margin: 0; font: 800 1.1rem/1.2 var(--font-display); }
+.sheet p { margin: 0; }
+.lead { font-size: 1.05rem; max-width: 60ch; }
+.fine { color: var(--ink-soft); font-size: 0.92rem; }
+.callout {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px; border-radius: 14px;
+  background: var(--surface); border: 2px solid var(--accent);
+}
+.callout ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 4px; }
+
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.row-art { width: 64px; height: 64px; border-radius: 14px; background: var(--c); padding: 5px; display: grid; place-items: center; }
+.row-art svg { width: 100%; height: 100%; }
+.row-main { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.row-status { color: var(--ink-soft); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.row.has .row-status { color: var(--ink); }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.row-job { padding: 12px; border-radius: 12px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; }
+
+.btn {
+  appearance: none;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 1rem/1.1 var(--font-body);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
+.working { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.working::before {
+  content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
+
+.toast {
+  position: fixed; z-index: 40;
+  left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  transform: translate(-50%, 12px);
+  max-width: calc(100% - 32px);
+  padding: 12px 18px; border-radius: 14px;
+  background: var(--ink); color: var(--bg);
+  font-weight: 700; text-align: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.wiggle { animation: none; }
+  .tile, .big-btn { transition: none; }
+  .spinner, .working::before { animation-duration: 2.4s; }
+  .lock.holding .ring .prog { transition: none; stroke-dashoffset: 50; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <h1>Sing With Me</h1>
+    <button class="lock" id="lock" type="button" aria-label="Grown-ups: press and hold for 2 seconds to add videos">
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="base" cx="24" cy="24" r="21" pathLength="100"/><circle class="prog" cx="24" cy="24" r="21" pathLength="100"/></svg>
+      <svg class="padlock" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/></svg>
+    </button>
+  </header>
+  <p class="note" id="note" hidden></p>
+
+  <main class="grid" id="grid">
+    <button class="tile t-ship" type="button" data-song="heart-will-go-on" aria-label="Play My Heart Will Go On">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <circle cx="92" cy="42" r="17" fill="#ffd36e"/>
+        <path d="M22 16c-3-6-12-4-10 3c1 4 10 10 10 10s9-6 10-10c2-7-7-9-10-3z" fill="#e8364f"/>
+        <g fill="#f3b33d"><rect x="34" y="30" width="9" height="20" rx="1"/><rect x="48" y="30" width="9" height="20" rx="1"/><rect x="62" y="30" width="9" height="20" rx="1"/><rect x="76" y="30" width="9" height="20" rx="1"/></g>
+        <g fill="#22203a"><rect x="34" y="30" width="9" height="5" rx="1"/><rect x="48" y="30" width="9" height="5" rx="1"/><rect x="62" y="30" width="9" height="5" rx="1"/><rect x="76" y="30" width="9" height="5" rx="1"/></g>
+        <rect x="24" y="48" width="72" height="10" rx="2" fill="#fffaf2"/>
+        <path d="M8 56H114L103 78H19Z" fill="#22203a"/>
+        <path d="M15 70H107L103 78H19Z" fill="#d9453b"/>
+        <g fill="#fffaf2"><circle cx="26" cy="63" r="1.8"/><circle cx="36" cy="63" r="1.8"/><circle cx="46" cy="63" r="1.8"/><circle cx="56" cy="63" r="1.8"/><circle cx="66" cy="63" r="1.8"/><circle cx="76" cy="63" r="1.8"/><circle cx="86" cy="63" r="1.8"/><circle cx="96" cy="63" r="1.8"/></g>
+        <path d="M0 80q7.5-5 15 0t15 0t15 0t15 0t15 0t15 0t15 0t15 0V100H0Z" fill="#3a7bd5"/>
+      </svg></span>
+      <span class="name">My Heart Will Go On</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+
+    <button class="tile t-ice" type="button" data-song="frozen-heart" aria-label="Play Frozen Heart">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <g fill="#bfe9f7"><rect x="24" y="80" width="22" height="13" rx="2"/><rect x="49" y="80" width="22" height="13" rx="2"/><rect x="74" y="80" width="22" height="13" rx="2"/></g>
+        <path d="M60 30c-8-16-34-12-30 8c3 13 30 32 30 32s27-19 30-32c4-20-22-24-30-8z" fill="#e4f8ff" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M60 30L52 46L60 70M52 46L34 42M52 46L72 50L86 40M72 50L60 70" fill="none" stroke="#9fd6ec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <g fill="#ffffff"><path d="M18 16l2 6l6 2l-6 2l-2 6l-2-6l-6-2l6-2z"/><path d="M102 12l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/><path d="M104 56l2 6l6 2l-6 2l-2 6l-2-6l-6-2l6-2z"/></g>
+      </svg></span>
+      <span class="name">Frozen Heart</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+
+    <button class="tile t-snow" type="button" data-song="let-it-go" aria-label="Play Let It Go">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <g fill="#d9cdff"><circle cx="18" cy="20" r="3"/><circle cx="102" cy="26" r="2.5"/><circle cx="24" cy="80" r="2.5"/><circle cx="98" cy="78" r="3"/><circle cx="12" cy="52" r="2"/><circle cx="108" cy="52" r="2"/></g>
+        <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none">
+          <path d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+          <path transform="rotate(60 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+          <path transform="rotate(120 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+          <path transform="rotate(180 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+          <path transform="rotate(240 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+          <path transform="rotate(300 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
+        </g>
+        <circle cx="60" cy="50" r="7" fill="#ffffff"/>
+      </svg></span>
+      <span class="name">Let It Go</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+
+    <button class="tile t-spider" type="button" data-song="incy-wincy-spider" aria-label="Play Incy Wincy Spider">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <circle cx="100" cy="18" r="10" fill="#ff9f1c"/>
+        <g stroke="#ff9f1c" stroke-width="3" stroke-linecap="round"><path d="M100 1v4M100 31v4M83 18h4M113 18h4M88 6l2.8 2.8M112 6l-2.8 2.8M88 30l2.8-2.8M112 30l-2.8-2.8"/></g>
+        <path d="M12 0H28V72Q28 78 34 78H46V92H30Q12 92 12 76Z" fill="#8a96ab"/>
+        <g fill="#6f7a90"><rect x="10" y="20" width="20" height="5" rx="1"/><rect x="10" y="50" width="20" height="5" rx="1"/></g>
+        <g fill="#3a8ee6"><path d="M42 15c-4 6-4 10 0 10s4-4 0-10z"/><path d="M100 45c-4 6-4 10 0 10s4-4 0-10z"/><path d="M96 81c-4 6-4 10 0 10s4-4 0-10z"/><path d="M58 83c-4 6-4 10 0 10s4-4 0-10z"/></g>
+        <path d="M66 0V36" stroke="#2b2141" stroke-width="1.6"/>
+        <g fill="none" stroke="#2b2141" stroke-width="3.5" stroke-linecap="round">
+          <path d="M55 44q-12-8-17-1"/><path d="M53 50q-14-2-18 5"/><path d="M54 56q-12 4-14 12"/><path d="M58 61q-6 7-6 14"/>
+          <path d="M77 44q12-8 17-1"/><path d="M79 50q14-2 18 5"/><path d="M78 56q12 4 14 12"/><path d="M74 61q6 7 6 14"/>
+        </g>
+        <circle cx="66" cy="50" r="14" fill="#2b2141"/>
+        <circle cx="61" cy="47" r="4.2" fill="#ffffff"/><circle cx="71" cy="47" r="4.2" fill="#ffffff"/>
+        <circle cx="62" cy="48" r="2" fill="#2b2141"/><circle cx="72" cy="48" r="2" fill="#2b2141"/>
+        <path d="M61 55q5 4 10 0" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      </svg></span>
+      <span class="name">Incy Wincy Spider</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+
+    <button class="tile t-bus" type="button" data-song="wheels-on-the-bus" aria-label="Play Wheels on the Bus">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <rect x="8" y="24" width="104" height="50" rx="9" fill="#ffc93c"/>
+        <rect x="8" y="56" width="104" height="6" fill="#e99a12"/>
+        <g fill="#c4e8ff"><rect x="16" y="32" width="15" height="15" rx="2.5"/><rect x="35" y="32" width="15" height="15" rx="2.5"/><rect x="54" y="32" width="15" height="15" rx="2.5"/><rect x="73" y="32" width="15" height="15" rx="2.5"/><rect x="94" y="32" width="12" height="36" rx="2.5"/></g>
+        <path d="M100 32V68" stroke="#8fc9ea" stroke-width="1.5"/>
+        <circle cx="32" cy="74" r="11" fill="#2b2141"/><circle cx="32" cy="74" r="4.5" fill="#d8dce8"/>
+        <circle cx="86" cy="74" r="11" fill="#2b2141"/><circle cx="86" cy="74" r="4.5" fill="#d8dce8"/>
+        <path d="M4 91H116" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 8" opacity="0.75"/>
+      </svg></span>
+      <span class="name">Wheels on the Bus</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+
+    <button class="tile t-sheep" type="button" data-song="baa-baa-black-sheep" aria-label="Play Baa Baa Black Sheep">
+      <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
+        <path d="M0 82q15-8 30 0t30 0t30 0t30 0V100H0Z" fill="#4b9c52"/>
+        <g fill="#1b1926"><rect x="50" y="62" width="6" height="22" rx="3"/><rect x="60" y="64" width="6" height="20" rx="3"/><rect x="72" y="64" width="6" height="20" rx="3"/><rect x="82" y="62" width="6" height="22" rx="3"/></g>
+        <g fill="#34303f"><circle cx="54" cy="50" r="13"/><circle cx="68" cy="42" r="14"/><circle cx="82" cy="50" r="13"/><circle cx="60" cy="60" r="12"/><circle cx="78" cy="60" r="12"/><circle cx="69" cy="54" r="15"/></g>
+        <ellipse cx="33" cy="46" rx="6" ry="3" transform="rotate(-25 33 46)" fill="#1b1926"/>
+        <ellipse cx="42" cy="52" rx="10" ry="12" fill="#1b1926"/>
+        <circle cx="38" cy="50" r="3" fill="#ffffff"/><circle cx="45" cy="50" r="3" fill="#ffffff"/>
+        <circle cx="38.5" cy="51" r="1.5" fill="#1b1926"/><circle cx="45.5" cy="51" r="1.5" fill="#1b1926"/>
+        <path d="M96 70q5-5 10 0l4 14q-9 4-18 0z" fill="#f4e6c4"/>
+        <path d="M96 70h10" stroke="#b9945a" stroke-width="2" stroke-linecap="round"/>
+      </svg></span>
+      <span class="name">Baa Baa Black Sheep</span>
+      <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+    </button>
+  </main>
+</div>
+
+<div class="player" id="player" hidden data-state="loading">
+  <div class="stage" id="player-stage">
+    <video id="player-video" playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+  </div>
+  <div class="center">
+    <div class="spinner" aria-hidden="true"></div>
+    <button class="big-btn huge" id="player-play" type="button" aria-label="Play">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.2-6.5a1 1 0 0 0 0-1.7L9.5 4.6A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg>
+    </button>
+    <div class="end-actions">
+      <div class="end-btn">
+        <button class="big-btn huge" id="player-again" type="button" aria-label="Play again">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>
+        </button>
+        <span aria-hidden="true">Again</span>
+      </div>
+      <div class="end-btn">
+        <button class="big-btn huge" id="player-home-2" type="button" aria-label="Back to songs">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
+        </button>
+        <span aria-hidden="true">Songs</span>
+      </div>
+    </div>
+    <p class="player-msg">This video won't play on this phone.</p>
+  </div>
+  <button class="big-btn home" id="player-home" type="button" aria-label="Back to songs">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
+  </button>
+</div>
+
+<section class="sheet" id="grownups" hidden role="dialog" aria-modal="true" aria-labelledby="gu-title">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <h2 id="gu-title">Grown-ups</h2>
+      <button class="btn primary" id="gu-done" type="button">Done</button>
+    </div>
+
+    <div class="callout" id="install" hidden>
+      <h3>First, put the app on your home screen</h3>
+      <div id="install-steps"></div>
+      <button class="btn primary" id="install-btn" type="button" hidden>Install Sing With Me</button>
+    </div>
+
+    <p class="lead">Add a video of yourself singing each song. When the kids tap a picture, your video plays.</p>
+    <ul class="rows" id="rows"></ul>
+    <h3>Where the videos are kept</h3>
+    <p class="fine">Videos are saved inside this app, on this phone only. They aren't uploaded anywhere. Your originals stay in your Photos, so if the app is ever deleted you can add them again.</p>
+    <p class="fine" id="gu-usage" hidden></p>
+  </div>
+</section>
+
+<input class="vh" type="file" id="file-input" accept="video/*" tabindex="-1" aria-hidden="true">
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const HOLD_MS = 2000;
+  const SONGS = [
+    { id: 'heart-will-go-on', title: 'My Heart Will Go On' },
+    { id: 'frozen-heart', title: 'Frozen Heart' },
+    { id: 'let-it-go', title: 'Let It Go' },
+    { id: 'incy-wincy-spider', title: 'Incy Wincy Spider' },
+    { id: 'wheels-on-the-bus', title: 'Wheels on the Bus' },
+    { id: 'baa-baa-black-sheep', title: 'Baa Baa Black Sheep' },
+  ];
+  const byId = Object.fromEntries(SONGS.map(s => [s.id, s]));
+  const $ = (sel, el = document) => el.querySelector(sel);
+
+  const isStandalone = () =>
+    (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  let videos = {};
+  let loaded = false;
+  let storageBroken = false;
+  let job = null;
+  let pendingSong = null;
+  let installPrompt = null;
+
+  /* ---------- formatting ---------- */
+  const fmtSize = b => b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : Math.max(0.1, b / 1e6).toFixed(b < 1e7 ? 1 : 0) + ' MB';
+  const fmtDur = s => {
+    if (!isFinite(s) || s <= 0) return '';
+    const t = Math.round(s);
+    return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  };
+  const fmtDate = iso => {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  };
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  /* ---------- on-phone video store (IndexedDB) ---------- */
+  const DB_NAME = 'sing-with-me';
+  const STORE = 'videos';
+  let dbPromise = null;
+  function openDb() {
+    if (!dbPromise) {
+      dbPromise = new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('no indexedDB'));
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    return dbPromise;
+  }
+  async function storeRun(mode, fn) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const req = fn(tx.objectStore(STORE));
+      tx.oncomplete = () => resolve(req ? req.result : undefined);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  }
+  const storeGet = key => storeRun('readonly', s => s.get(key));
+  const storePut = (key, val) => storeRun('readwrite', s => s.put(val, key));
+  const storeDelete = key => storeRun('readwrite', s => s.delete(key));
+  async function storeAll() {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const out = {};
+      const tx = db.transaction(STORE, 'readonly');
+      const cur = tx.objectStore(STORE).openCursor();
+      cur.onsuccess = () => {
+        const c = cur.result;
+        if (c) { out[c.key] = c.value; c.continue(); }
+      };
+      tx.oncomplete = () => resolve(out);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  /* ---------- kids' tiles ---------- */
+  const tiles = {};
+  document.querySelectorAll('.tile').forEach(t => { tiles[t.dataset.song] = t; });
+  const hasVideo = id => !!(videos[id] && videos[id].blob);
+
+  function renderTiles() {
+    let ready = 0;
+    for (const s of SONGS) {
+      const t = tiles[s.id];
+      const has = hasVideo(s.id);
+      if (has) ready++;
+      t.classList.toggle('empty', loaded && !has);
+      t.setAttribute('aria-label', has || !loaded ? 'Play ' + s.title : s.title + ': no video yet');
+    }
+    let msg = '';
+    if (storageBroken) msg = 'This browser can’t save videos. Open the app from its home-screen icon, or try Safari on iPhone or Chrome on Android.';
+    else if (loaded && ready === 0) msg = isStandalone()
+      ? 'No videos yet. Grown-ups: press and hold the lock for 2 seconds to add them.'
+      : 'Grown-ups: press and hold the lock for 2 seconds to set up the app.';
+    const note = $('#note');
+    note.textContent = msg;
+    note.hidden = !msg;
+  }
+
+  function wiggle(el) {
+    el.classList.remove('wiggle');
+    void el.offsetWidth;
+    el.classList.add('wiggle');
+  }
+
+  for (const s of SONGS) {
+    tiles[s.id].addEventListener('click', () => {
+      if (hasVideo(s.id)) openPlayer(s.id);
+      else wiggle(tiles[s.id]);
+    });
+    tiles[s.id].addEventListener('animationend', () => tiles[s.id].classList.remove('wiggle'));
+  }
+  document.addEventListener('contextmenu', e => { if (!e.target.closest('.sheet')) e.preventDefault(); });
+  document.addEventListener('gesturestart', e => e.preventDefault()); // no pinch-zoom on iPhone
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+
+  /* ---------- player ---------- */
+  const player = $('#player');
+  const pv = $('#player-video');
+  let playUrl = null;
+  const setPlayerState = st => { player.dataset.state = st; };
+
+  function openPlayer(id) {
+    player.dataset.song = id;
+    player.hidden = false;
+    setPlayerState('loading');
+    if (playUrl) URL.revokeObjectURL(playUrl);
+    playUrl = URL.createObjectURL(videos[id].blob);
+    pv.src = playUrl;
+    const p = pv.play();
+    if (p && p.catch) p.catch(err => { if (!player.hidden && err && err.name === 'NotAllowedError') setPlayerState('paused'); });
+    $('#player-home').focus({ preventScroll: true });
+  }
+  function closePlayer() {
+    pv.pause();
+    pv.removeAttribute('src');
+    pv.load();
+    if (playUrl) { URL.revokeObjectURL(playUrl); playUrl = null; }
+    player.hidden = true;
+    const t = tiles[player.dataset.song];
+    if (t) t.focus({ preventScroll: true });
+  }
+  pv.addEventListener('playing', () => setPlayerState('playing'));
+  pv.addEventListener('waiting', () => { if (!pv.paused) setPlayerState('loading'); });
+  pv.addEventListener('pause', () => { if (!player.hidden && !pv.ended) setPlayerState('paused'); });
+  pv.addEventListener('ended', () => setPlayerState('ended'));
+  pv.addEventListener('error', () => { if (!player.hidden && pv.getAttribute('src')) setPlayerState('error'); });
+  $('#player-stage').addEventListener('click', () => {
+    const st = player.dataset.state;
+    if (st === 'playing') pv.pause();
+    else if (st === 'paused') pv.play().catch(() => {});
+  });
+  $('#player-play').addEventListener('click', () => pv.play().catch(() => {}));
+  $('#player-again').addEventListener('click', () => { pv.currentTime = 0; pv.play().catch(() => {}); });
+  $('#player-home').addEventListener('click', closePlayer);
+  $('#player-home-2').addEventListener('click', closePlayer);
+
+  /* ---------- hold-to-open lock ---------- */
+  const lock = $('#lock');
+  let holdTimer = null;
+  function holdStart() {
+    if (holdTimer) return;
+    lock.classList.add('holding');
+    holdTimer = setTimeout(() => {
+      holdTimer = null;
+      lock.classList.remove('holding');
+      openPanel();
+    }, HOLD_MS);
+  }
+  function holdEnd() {
+    if (!holdTimer) return;
+    clearTimeout(holdTimer);
+    holdTimer = null;
+    lock.classList.remove('holding');
+    toast('Grown-ups: keep holding the lock for 2 seconds.');
+  }
+  lock.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (lock.setPointerCapture) { try { lock.setPointerCapture(e.pointerId); } catch (_) {} }
+    holdStart();
+  });
+  lock.addEventListener('pointerup', holdEnd);
+  lock.addEventListener('pointercancel', holdEnd);
+  lock.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); holdStart(); }
+  });
+  lock.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') holdEnd(); });
+
+  /* ---------- install help ---------- */
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    installPrompt = e;
+    renderInstall();
+  });
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    renderInstall();
+    toast('Installed. Open Sing With Me from your home screen.');
+  });
+  $('#install-btn').addEventListener('click', async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    try { await installPrompt.userChoice; } catch (_) {}
+    installPrompt = null;
+    renderInstall();
+  });
+
+  function renderInstall() {
+    const box = $('#install');
+    box.hidden = isStandalone();
+    if (box.hidden) return;
+    const steps = $('#install-steps');
+    steps.replaceChildren();
+    const ol = document.createElement('ol');
+    const add = text => { const li = document.createElement('li'); li.textContent = text; ol.appendChild(li); };
+    let after = '';
+    if (isIOS) {
+      add('In Safari, tap the Share button (the square with an arrow pointing up).');
+      add('Scroll down and tap “Add to Home Screen”, then “Add”.');
+      add('Close Safari and open Sing With Me from the new icon.');
+      add('Add your videos there.');
+      after = 'On iPhone, videos added here in Safari stay in Safari and won’t show up in the home-screen app, so add them from the app.';
+    } else if (isAndroid) {
+      if (installPrompt) add('Tap “Install Sing With Me” below.');
+      else add('In Chrome, tap the ⋮ menu (top right), then “Install app” or “Add to Home screen”.');
+      add('Open Sing With Me from the new icon on your home screen.');
+      add('Add your videos there.');
+    } else {
+      add('Open this page on your phone: Safari on iPhone, or Chrome on Android.');
+      add('Add it to the home screen from the browser’s share or ⋮ menu.');
+      add('Open Sing With Me from the new icon and add your videos there.');
+    }
+    steps.appendChild(ol);
+    if (after) {
+      const p = document.createElement('p');
+      p.className = 'fine';
+      p.textContent = after;
+      steps.appendChild(p);
+    }
+    $('#install-btn').hidden = !installPrompt;
+  }
+
+  /* ---------- grown-ups sheet ---------- */
+  const sheet = $('#grownups');
+  const rowsEl = $('#rows');
+  const fileInput = $('#file-input');
+  const rows = {};
+
+  for (const s of SONGS) {
+    const tile = tiles[s.id];
+    const tone = [...tile.classList].find(c => c.startsWith('t-'));
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.song = s.id;
+    li.innerHTML =
+      '<div class="row-art ' + tone + '">' + $('.art', tile).innerHTML + '</div>' +
+      '<div class="row-main">' +
+        '<h3 class="row-title"></h3>' +
+        '<p class="row-status"></p>' +
+        '<div class="row-job" hidden></div>' +
+        '<div class="row-actions">' +
+          '<button type="button" class="btn primary" data-act="pick"></button>' +
+          '<button type="button" class="btn danger" data-act="remove">Remove</button>' +
+        '</div>' +
+      '</div>';
+    $('.row-title', li).textContent = s.title;
+    rowsEl.appendChild(li);
+    rows[s.id] = {
+      li,
+      status: $('.row-status', li),
+      job: $('.row-job', li),
+      actions: $('.row-actions', li),
+      pick: $('[data-act="pick"]', li),
+      remove: $('[data-act="remove"]', li),
+    };
+  }
+
+  const isBusy = () => !!job && (job.stage === 'saving' || job.stage === 'removing');
+
+  function openPanel() {
+    sheet.hidden = false;
+    sheet.scrollTop = 0;
+    renderInstall();
+    renderPanel();
+    renderUsage();
+    $('#gu-done').focus({ preventScroll: true });
+  }
+  function closePanel() {
+    if (isBusy()) return;
+    job = null;
+    sheet.hidden = true;
+    lock.focus({ preventScroll: true });
+  }
+  $('#gu-done').addEventListener('click', closePanel);
+
+  function statusLine(v) {
+    return ['Added ' + fmtDate(v.addedAt), fmtDur(v.duration), v.size ? fmtSize(v.size) : ''].filter(Boolean).join(' · ');
+  }
+
+  function setJob(next) { job = next; renderPanel(); }
+
+  function renderPanel() {
+    if (sheet.hidden) return;
+    const busy = isBusy();
+    const done = $('#gu-done');
+    done.disabled = busy;
+    done.textContent = busy ? 'Saving…' : 'Done';
+    for (const s of SONGS) {
+      const r = rows[s.id];
+      const has = hasVideo(s.id);
+      r.li.classList.toggle('has', has);
+      r.status.textContent = has ? statusLine(videos[s.id]) : 'No video yet';
+      const mine = job && job.song === s.id ? job : null;
+      r.actions.hidden = storageBroken || !!mine;
+      r.pick.textContent = has ? 'Replace video' : 'Add video';
+      r.pick.disabled = !!job;
+      r.remove.hidden = !has;
+      r.remove.disabled = !!job;
+      renderJob(r, mine);
+    }
+  }
+
+  function renderJob(r, j) {
+    const el = r.job;
+    el.replaceChildren();
+    el.hidden = !j;
+    if (!j) return;
+    const p = (text, cls) => { const n = document.createElement('p'); n.textContent = text; if (cls) n.className = cls; el.appendChild(n); };
+    const btns = list => {
+      const wrap = document.createElement('div');
+      wrap.className = 'row-actions';
+      for (const [act, label, cls] of list) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn' + (cls ? ' ' + cls : '');
+        b.dataset.act = act;
+        b.textContent = label;
+        wrap.appendChild(b);
+      }
+      el.appendChild(wrap);
+    };
+    switch (j.stage) {
+      case 'saving':
+        p('Saving the video' + (j.size ? ' (' + fmtSize(j.size) + ')' : '') + '…', 'working');
+        break;
+      case 'removing':
+        p('Removing the video…', 'working');
+        break;
+      case 'confirm-remove':
+        p('Remove the video for “' + byId[j.song].title + '” from this app? Your original stays in your Photos.');
+        btns([['remove-yes', 'Yes, remove it', 'danger'], ['cancel', 'Keep it']]);
+        break;
+      case 'error':
+        p(j.msg);
+        btns([['cancel', 'OK']]);
+        break;
+    }
+  }
+
+  rowsEl.addEventListener('click', e => {
+    const b = e.target.closest('button[data-act]');
+    if (!b || b.disabled) return;
+    const id = b.closest('.row').dataset.song;
+    switch (b.dataset.act) {
+      case 'pick':
+        pendingSong = id;
+        fileInput.value = '';
+        fileInput.click();
+        break;
+      case 'remove': setJob({ song: id, stage: 'confirm-remove' }); break;
+      case 'remove-yes': removeVideo(id); break;
+      case 'cancel': setJob(null); break;
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    const song = pendingSong;
+    pendingSong = null;
+    if (file && song) saveVideo(song, file);
+  });
+
+  function readDuration(file) {
+    return new Promise(resolve => {
+      const v = document.createElement('video');
+      const url = URL.createObjectURL(file);
+      let settled = false;
+      const finish = d => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        v.removeAttribute('src');
+        v.load();
+        URL.revokeObjectURL(url);
+        resolve(d);
+      };
+      const timer = setTimeout(() => finish(null), 6000);
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'metadata';
+      v.onloadedmetadata = () => finish(isFinite(v.duration) && v.duration > 0 ? v.duration : null);
+      v.onerror = () => finish(null);
+      v.src = url;
+      v.load();
+    });
+  }
+
+  async function saveVideo(song, file) {
+    if (file.type && !file.type.startsWith('video/')) {
+      return setJob({ song, stage: 'error', msg: 'That file isn’t a video. Pick a video from your Photos.' });
+    }
+    setJob({ song, stage: 'saving', size: file.size });
+    const duration = await readDuration(file);
+    const record = {
+      blob: file,
+      type: file.type || 'video/mp4',
+      size: file.size,
+      addedAt: new Date().toISOString(),
+      duration: duration ? Math.round(duration * 10) / 10 : null,
+    };
+    let saved;
+    try {
+      await storePut(song, record);
+      saved = await storeGet(song);
+      if (!saved || !saved.blob || saved.blob.size !== file.size) throw new Error('read-back mismatch');
+    } catch (e) {
+      const full = e && (e.name === 'QuotaExceededError' || /quota/i.test(String(e.message)));
+      return setJob({
+        song, stage: 'error',
+        msg: full
+          ? 'There isn’t enough room on this phone for that video (' + fmtSize(file.size) + '). Free up some space, or record a shorter video, then try again.'
+          : 'The video couldn’t be saved. Try again.',
+      });
+    }
+    videos[song] = saved;
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    setJob(null);
+    renderTiles();
+    toast('Saved “' + byId[song].title + '”');
+    renderUsage();
+  }
+
+  async function removeVideo(song) {
+    setJob({ song, stage: 'removing' });
+    try {
+      await storeDelete(song);
+    } catch (e) {
+      return setJob({ song, stage: 'error', msg: 'The video couldn’t be removed. Try again.' });
+    }
+    delete videos[song];
+    setJob(null);
+    renderTiles();
+    toast('Removed “' + byId[song].title + '”');
+    renderUsage();
+  }
+
+  async function renderUsage() {
+    const el = $('#gu-usage');
+    const total = Object.values(videos).reduce((a, v) => a + (v.size || 0), 0);
+    const count = Object.keys(videos).length;
+    if (!count) { el.hidden = true; return; }
+    let text = 'Your ' + count + (count === 1 ? ' video uses ' : ' videos use ') + fmtSize(total) + ' on this phone.';
+    try {
+      const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+      if (est && est.quota && est.usage != null) text += ' Room for about ' + fmtSize(Math.max(0, est.quota - est.usage)) + ' more.';
+    } catch (_) {}
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!player.hidden) closePlayer();
+    else if (!sheet.hidden) closePanel();
+  });
+
+  /* ---------- start ---------- */
+  async function boot() {
+    try {
+      videos = await storeAll();
+    } catch (_) {
+      storageBroken = true;
+    }
+    loaded = true;
+    renderTiles();
+    renderPanel();
+  }
+  boot();
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
