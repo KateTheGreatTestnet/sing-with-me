@@ -1,5 +1,5 @@
 // Keeps the app working offline. Videos are not cached here: they live in the app's own storage on the phone.
-const CACHE = 'sing-with-me-v1';
+const CACHE = 'sing-with-me-v2';
 const SHELL = [
   './',
   './index.html',

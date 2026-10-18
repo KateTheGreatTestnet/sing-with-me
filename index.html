@@ -125,7 +125,7 @@ button { font: inherit; }
 
 .t-ship   { --c: #ff9f7f; --deep: #d96c4d; --label: #2a1a3d; }
 .t-ice    { --c: #2a8fbc; --deep: #1c6a8f; --label: #ffffff; }
-.t-snow   { --c: #7d5fdc; --deep: #5940b0; --label: #ffffff; }
+.t-star   { --c: #7d5fdc; --deep: #5940b0; --label: #ffffff; }
 .t-spider { --c: #ffd34a; --deep: #d6a314; --label: #2b2141; }
 .t-bus    { --c: #ec5a4c; --deep: #bb392d; --label: #ffffff; }
 .t-sheep  { --c: #72c578; --deep: #4b9c52; --label: #14321c; }
@@ -282,6 +282,13 @@ button { font: inherit; }
 .btn.danger { color: var(--danger); }
 .btn:disabled { opacity: 0.45; cursor: default; }
 
+.old-videos { display: flex; flex-direction: column; gap: 10px; }
+.old-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
 .working { display: flex; align-items: center; gap: 10px; font-weight: 700; }
 .working::before {
   content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%;
@@ -325,15 +332,22 @@ button { font: inherit; }
   <main class="grid" id="grid">
     <button class="tile t-ship" type="button" data-song="heart-will-go-on" aria-label="Play My Heart Will Go On">
       <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
-        <circle cx="92" cy="42" r="17" fill="#ffd36e"/>
-        <path d="M22 16c-3-6-12-4-10 3c1 4 10 10 10 10s9-6 10-10c2-7-7-9-10-3z" fill="#e8364f"/>
-        <g fill="#f3b33d"><rect x="34" y="30" width="9" height="20" rx="1"/><rect x="48" y="30" width="9" height="20" rx="1"/><rect x="62" y="30" width="9" height="20" rx="1"/><rect x="76" y="30" width="9" height="20" rx="1"/></g>
-        <g fill="#22203a"><rect x="34" y="30" width="9" height="5" rx="1"/><rect x="48" y="30" width="9" height="5" rx="1"/><rect x="62" y="30" width="9" height="5" rx="1"/><rect x="76" y="30" width="9" height="5" rx="1"/></g>
-        <rect x="24" y="48" width="72" height="10" rx="2" fill="#fffaf2"/>
-        <path d="M8 56H114L103 78H19Z" fill="#22203a"/>
-        <path d="M15 70H107L103 78H19Z" fill="#d9453b"/>
-        <g fill="#fffaf2"><circle cx="26" cy="63" r="1.8"/><circle cx="36" cy="63" r="1.8"/><circle cx="46" cy="63" r="1.8"/><circle cx="56" cy="63" r="1.8"/><circle cx="66" cy="63" r="1.8"/><circle cx="76" cy="63" r="1.8"/><circle cx="86" cy="63" r="1.8"/><circle cx="96" cy="63" r="1.8"/></g>
-        <path d="M0 80q7.5-5 15 0t15 0t15 0t15 0t15 0t15 0t15 0t15 0V100H0Z" fill="#3a7bd5"/>
+        <circle cx="86" cy="24" r="12" fill="#ffd36e"/>
+        <path d="M20 14c-3-6-12-4-10 3c1 4 10 10 10 10s9-6 10-10c2-7-7-9-10-3z" fill="#e8364f"/>
+        <path d="M90 76L96 56L101 60L107 38L113 52L117 47L120 54V76Z" fill="#f4fbff"/>
+        <path d="M107 38L110 60L120 76V54L117 47L113 52Z" fill="#cfe9f6"/>
+        <g transform="translate(50 64) rotate(18) scale(0.85) translate(-61 -56)">
+          <g fill="#f3b33d"><rect x="34" y="30" width="9" height="20" rx="1"/><rect x="48" y="30" width="9" height="20" rx="1"/><rect x="62" y="30" width="9" height="20" rx="1"/><rect x="76" y="30" width="9" height="20" rx="1"/></g>
+          <g fill="#22203a"><rect x="34" y="30" width="9" height="5" rx="1"/><rect x="48" y="30" width="9" height="5" rx="1"/><rect x="62" y="30" width="9" height="5" rx="1"/><rect x="76" y="30" width="9" height="5" rx="1"/></g>
+          <rect x="24" y="48" width="72" height="10" rx="2" fill="#fffaf2"/>
+          <path d="M8 56H114L103 78H19Z" fill="#22203a"/>
+          <path d="M15 70H107L103 78H19Z" fill="#d9453b"/>
+          <g fill="#fffaf2"><circle cx="26" cy="63" r="1.8"/><circle cx="36" cy="63" r="1.8"/><circle cx="46" cy="63" r="1.8"/><circle cx="56" cy="63" r="1.8"/><circle cx="66" cy="63" r="1.8"/><circle cx="76" cy="63" r="1.8"/><circle cx="86" cy="63" r="1.8"/><circle cx="96" cy="63" r="1.8"/></g>
+        </g>
+        <path d="M0 74q7.5-5 15 0t15 0t15 0t15 0t15 0t15 0t15 0t15 0V100H0Z" fill="#3a7bd5"/>
+        <path d="M88 79H120V95L102 93Z" fill="#7fb0ea"/>
+        <path d="M2 77h15l-3 4.5h-9z" fill="#fffaf2"/>
+        <g fill="#ffffff"><circle cx="72" cy="70" r="1.8"/><circle cx="78" cy="67.5" r="1.4"/><circle cx="84" cy="70" r="1.6"/></g>
       </svg></span>
       <span class="name">My Heart Will Go On</span>
       <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
@@ -341,29 +355,42 @@ button { font: inherit; }
 
     <button class="tile t-ice" type="button" data-song="frozen-heart" aria-label="Play Frozen Heart">
       <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
-        <g fill="#bfe9f7"><rect x="24" y="80" width="22" height="13" rx="2"/><rect x="49" y="80" width="22" height="13" rx="2"/><rect x="74" y="80" width="22" height="13" rx="2"/></g>
-        <path d="M60 30c-8-16-34-12-30 8c3 13 30 32 30 32s27-19 30-32c4-20-22-24-30-8z" fill="#e4f8ff" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M0 90q20-5 40 0t40 0t40 0V100H0Z" fill="#d6f3ff"/>
+        <g fill="#c4ecfb">
+          <path d="M33.5 47L42 55L37 66Z"/><path d="M46 58.5L54 66L49.5 75Z"/>
+          <path d="M86.5 47L78 55L83 66Z"/><path d="M74 58.5L66 66L70.5 75Z"/>
+          <path d="M56 66L64 66L60 84Z"/>
+        </g>
+        <path d="M60 30c-8-16-34-12-30 8c3 13 30 32 30 32s27-19 30-32c4-20-22-24-30-8z" fill="#dff5fd" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
         <path d="M60 30L52 46L60 70M52 46L34 42M52 46L72 50L86 40M72 50L60 70" fill="none" stroke="#9fd6ec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <g fill="#ffffff"><path d="M18 16l2 6l6 2l-6 2l-2 6l-2-6l-6-2l6-2z"/><path d="M102 12l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/><path d="M104 56l2 6l6 2l-6 2l-2 6l-2-6l-6-2l6-2z"/></g>
+        <path d="M37 33q3-7 10-8" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+        <g fill="#ffffff">
+          <ellipse cx="43" cy="21" rx="10" ry="4"/><circle cx="37" cy="20.5" r="3.5"/><circle cx="47" cy="19" r="4"/>
+          <ellipse cx="77" cy="21" rx="10" ry="4"/><circle cx="73" cy="19" r="4"/><circle cx="83" cy="20.5" r="3.5"/>
+        </g>
+        <g stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none">
+          <path d="M14 18v12M8.8 21l10.4 6M8.8 27l10.4-6"/>
+          <path d="M106 54v10M101.7 56.5l8.6 5M101.7 61.5l8.6-5"/>
+        </g>
+        <g fill="#ffffff"><path d="M102 10l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/><path d="M16 60l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/></g>
       </svg></span>
       <span class="name">Frozen Heart</span>
       <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
     </button>
 
-    <button class="tile t-snow" type="button" data-song="let-it-go" aria-label="Play Let It Go">
+    <button class="tile t-star" type="button" data-song="twinkle-twinkle" aria-label="Play Twinkle Twinkle Little Star">
       <span class="art"><svg viewBox="0 0 120 100" aria-hidden="true">
-        <g fill="#d9cdff"><circle cx="18" cy="20" r="3"/><circle cx="102" cy="26" r="2.5"/><circle cx="24" cy="80" r="2.5"/><circle cx="98" cy="78" r="3"/><circle cx="12" cy="52" r="2"/><circle cx="108" cy="52" r="2"/></g>
-        <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" fill="none">
-          <path d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-          <path transform="rotate(60 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-          <path transform="rotate(120 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-          <path transform="rotate(180 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-          <path transform="rotate(240 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-          <path transform="rotate(300 60 50)" d="M60 50V14M60 26l-9-8M60 26l9-8M60 38l-7-6M60 38l7-6"/>
-        </g>
-        <circle cx="60" cy="50" r="7" fill="#ffffff"/>
+        <g fill="#d9cdff"><circle cx="36" cy="12" r="1.6"/><circle cx="84" cy="9" r="1.6"/><circle cx="10" cy="46" r="1.6"/><circle cx="110" cy="46" r="1.6"/><circle cx="34" cy="92" r="1.6"/><circle cx="88" cy="92" r="1.6"/></g>
+        <circle cx="104" cy="20" r="11" fill="#fff3c4"/>
+        <circle cx="109" cy="15" r="9.5" fill="#7d5fdc"/>
+        <g fill="#ffffff"><path d="M16 14l2 6l6 2l-6 2l-2 6l-2-6l-6-2l6-2z"/><path d="M18 66l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/><path d="M102 64l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5l4.5-1.5z"/></g>
+        <path d="M60 16L70.6 35.4L92.3 39.5L77.1 55.6L80 77.5L60 68L40 77.5L42.9 55.6L27.7 39.5L49.4 35.4Z" fill="#ffd84a" stroke="#ffd84a" stroke-width="7" stroke-linejoin="round"/>
+        <g fill="#3b2a5c"><circle cx="53" cy="47" r="2.6"/><circle cx="67" cy="47" r="2.6"/></g>
+        <g fill="#ffffff"><circle cx="53.9" cy="46.1" r="0.9"/><circle cx="67.9" cy="46.1" r="0.9"/></g>
+        <g fill="#ff9fb0"><circle cx="48.5" cy="54" r="3.2"/><circle cx="71.5" cy="54" r="3.2"/></g>
+        <path d="M54 55q6 6 12 0" fill="none" stroke="#3b2a5c" stroke-width="2.5" stroke-linecap="round"/>
       </svg></span>
-      <span class="name">Let It Go</span>
+      <span class="name">Twinkle Twinkle Little Star</span>
       <span class="soon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
     </button>
 
@@ -468,6 +495,11 @@ button { font: inherit; }
     <h3>Where the videos are kept</h3>
     <p class="fine">Videos are saved inside this app, on this phone only. They aren't uploaded anywhere. Your originals stay in your Photos, so if the app is ever deleted you can add them again.</p>
     <p class="fine" id="gu-usage" hidden></p>
+    <div class="old-videos" id="old-videos" hidden>
+      <h3>Videos for songs no longer in the app</h3>
+      <p class="fine">These still use space on this phone. Your originals stay in your Photos.</p>
+      <ul class="rows" id="old-list"></ul>
+    </div>
   </div>
 </section>
 
@@ -482,7 +514,7 @@ button { font: inherit; }
   const SONGS = [
     { id: 'heart-will-go-on', title: 'My Heart Will Go On' },
     { id: 'frozen-heart', title: 'Frozen Heart' },
-    { id: 'let-it-go', title: 'Let It Go' },
+    { id: 'twinkle-twinkle', title: 'Twinkle Twinkle Little Star' },
     { id: 'incy-wincy-spider', title: 'Incy Wincy Spider' },
     { id: 'wheels-on-the-bus', title: 'Wheels on the Bus' },
     { id: 'baa-baa-black-sheep', title: 'Baa Baa Black Sheep' },
@@ -497,6 +529,8 @@ button { font: inherit; }
   const isAndroid = /Android/i.test(navigator.userAgent);
 
   let videos = {};
+  let oldVideos = {}; // saved for songs that have since been taken out of the app
+  const OLD_TITLES = { 'let-it-go': 'Let It Go' };
   let loaded = false;
   let storageBroken = false;
   let job = null;
@@ -778,6 +812,7 @@ button { font: inherit; }
     renderInstall();
     renderPanel();
     renderUsage();
+    renderOld();
     $('#gu-done').focus({ preventScroll: true });
   }
   function closePanel() {
@@ -963,6 +998,44 @@ button { font: inherit; }
     el.hidden = false;
   }
 
+  function renderOld() {
+    const keys = Object.keys(oldVideos);
+    $('#old-videos').hidden = !keys.length;
+    const list = $('#old-list');
+    list.replaceChildren();
+    for (const k of keys) {
+      const li = document.createElement('li');
+      li.className = 'old-row';
+      const label = document.createElement('span');
+      label.textContent = (OLD_TITLES[k] || k) + (oldVideos[k].size ? ' · ' + fmtSize(oldVideos[k].size) : '');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn danger';
+      b.dataset.old = k;
+      b.textContent = 'Remove';
+      li.append(label, b);
+      list.appendChild(li);
+    }
+  }
+  $('#old-list').addEventListener('click', async e => {
+    const b = e.target.closest('button[data-old]');
+    if (!b || b.disabled) return;
+    if (b.dataset.confirm !== 'yes') {
+      b.dataset.confirm = 'yes';
+      b.textContent = 'Yes, remove it';
+      return;
+    }
+    b.disabled = true;
+    try {
+      await storeDelete(b.dataset.old);
+      delete oldVideos[b.dataset.old];
+      toast('Removed the old video');
+    } catch (_) {
+      toast('That video couldn’t be removed. Try again.');
+    }
+    renderOld();
+  });
+
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!player.hidden) closePlayer();
@@ -972,7 +1045,11 @@ button { font: inherit; }
   /* ---------- start ---------- */
   async function boot() {
     try {
-      videos = await storeAll();
+      const all = await storeAll();
+      for (const [key, rec] of Object.entries(all)) {
+        if (byId[key]) videos[key] = rec;
+        else oldVideos[key] = rec;
+      }
     } catch (_) {
       storageBroken = true;
     }
